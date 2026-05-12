@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Milli Mücadele: Samsun Bilgi Yarışması</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Crimson+Pro:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --red: #b8001f;
+            --dark: #0d0d0d;
+            --cream: #f5f0e8;
+            --gold: #c8a84b;
+            --navy: #0a1628;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Crimson Pro', Georgia, serif;
+            background-color: var(--navy);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 20% 50%, rgba(184,0,31,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(200,168,75,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 60% 80%, rgba(184,0,31,0.06) 0%, transparent 50%);
+            animation: bgPulse 8s ease-in-out infinite alternate;
+            pointer-events: none;
+        }
+
+        @keyframes bgPulse {
+            from { opacity: 0.6; }
+            to { opacity: 1; }
+        }
+
+        /* Decorative crescent/star pattern */
+        .bg-pattern {
+            position: fixed;
+            inset: 0;
+            opacity: 0.03;
+            background-image: 
+                repeating-linear-gradient(45deg, var(--gold) 0, var(--gold) 1px, transparent 0, transparent 50%);
+            background-size: 30px 30px;
+            pointer-events: none;
+        }
+
+        #quiz-container {
+            position: relative;
+            width: 90%;
+            max-width: 680px;
+            animation: fadeIn 0.8s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Header panel */
+        .header-panel {
+            background: var(--red);
+            padding: 2rem 2.5rem 1.5rem;
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-panel::after {
+            content: '☽';
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 5rem;
+            opacity: 0.12;
+            line-height: 1;
+        }
+
+        .header-panel h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.4rem, 4vw, 2rem);
+            color: var(--cream);
+            line-height: 1.2;
+            letter-spacing: 0.02em;
+        }
+
+        .subtitle {
+            color: rgba(245,240,232,0.65);
+            font-size: 0.95rem;
+            margin-top: 0.4rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        /* Progress bar */
+        .progress-bar-wrap {
+            background: rgba(0,0,0,0.3);
+            height: 4px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--gold);
+            transition: width 0.5s ease;
+        }
+
+        /* Main card */
+        .main-card {
+            background: var(--cream);
+            padding: 2.5rem;
+            border-radius: 0 0 4px 4px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+        }
+
+        /* Question meta */
+        .question-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.2rem;
+        }
+
+        .question-counter {
+            font-size: 0.8rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--red);
+            font-weight: 600;
+        }
+
+        .score-badge {
+            background: var(--navy);
+            color: var(--gold);
+            font-size: 0.8rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        /* Question text */
+        #question-text {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.05rem, 2.5vw, 1.3rem);
+            color: var(--navy);
+            margin-bottom: 2rem;
+            line-height: 1.55;
+            border-left: 3px solid var(--gold);
+            padding-left: 1rem;
+        }
+
+        /* Options */
+        .options {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .option-btn {
+            padding: 0.9rem 1.2rem;
+            border: 1.5px solid rgba(10,22,40,0.2);
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-family: 'Crimson Pro', serif;
+            color: var(--navy);
+            text-align: left;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option-btn::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 3px;
+            background: var(--gold);
+            transform: scaleY(0);
+            transition: transform 0.2s ease;
+        }
+
+        .option-btn:hover {
+            border-color: var(--navy);
+            background: rgba(10,22,40,0.04);
+            transform: translateX(4px);
+        }
+
+        .option-btn:hover::before { transform: scaleY(1); }
+
+        .option-btn.correct {
+            background: #e8f5e9;
+            border-color: #2e7d32;
+            color: #1b5e20;
+        }
+
+        .option-btn.wrong {
+            background: #ffebee;
+            border-color: var(--red);
+            color: var(--red);
+        }
+
+        .option-btn.disabled { pointer-events: none; opacity: 0.6; }
+
+        .option-letter {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: rgba(10,22,40,0.08);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            letter-spacing: 0;
+        }
+
+        /* Feedback */
+        #feedback {
+            margin-top: 1rem;
+            font-size: 0.95rem;
+            min-height: 1.4rem;
+            text-align: center;
+            font-weight: 600;
+            color: var(--navy);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #feedback.show { opacity: 1; }
+
+        /* Result area */
+        #result-area {
+            text-align: center;
+        }
+
+        .result-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: var(--navy);
+            margin-bottom: 0.5rem;
+        }
+
+        .result-line {
+            width: 60px; height: 3px;
+            background: var(--gold);
+            margin: 0 auto 1.5rem;
+        }
+
+        .score-display {
+            font-size: 4rem;
+            font-family: 'Playfair Display', serif;
+            font-weight: 900;
+            color: var(--red);
+            line-height: 1;
+        }
+
+        .score-label {
+            color: #555;
+            margin-top: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .result-message {
+            margin: 1.5rem 0;
+            font-size: 1.1rem;
+            color: var(--navy);
+            line-height: 1.6;
+        }
+
+        .replay-btn {
+            background: var(--navy);
+            color: var(--cream);
+            border: none;
+            padding: 0.9rem 2.5rem;
+            font-family: 'Crimson Pro', serif;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s;
+            margin-top: 1rem;
+        }
+
+        .replay-btn:hover {
+            background: var(--red);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(184,0,31,0.4);
+        }
+
+        .hidden { display: none; }
+
+        /* Decorative divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+            color: rgba(10,22,40,0.2);
+            font-size: 0.8rem;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(10,22,40,0.15);
+        }
+
+        /* Slide animation for question change */
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .question-animate {
+            animation: slideIn 0.35s ease;
+        }
+    </style>
+</head>
+<body>
+<div class="bg-pattern"></div>
+
+<div id="quiz-container">
+    <div class="header-panel">
+        <div class="subtitle">Tarih Yarışması</div>
+        <h1>Milli Mücadele &amp; Samsun</h1>
+    </div>
+    <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+    </div>
+    <div class="main-card">
+        <div id="game">
+            <div class="question-meta">
+                <div class="question-counter" id="question-counter">Soru 1 / 8</div>
+                <div class="score-badge" id="score-badge">Puan: 0</div>
+            </div>
+            <div id="question-text" class="question-animate">Soru yükleniyor...</div>
+            <div id="options-container" class="options"></div>
+            <div id="feedback"></div>
+        </div>
+
+        <div id="result-area" class="hidden">
+            <div class="result-title">Yarışma Bitti!</div>
+            <div class="result-line"></div>
+            <div class="score-display" id="score-display">0</div>
+            <div class="score-label" id="score-label">/ 8 doğru cevap</div>
+            <div class="result-message" id="result-message"></div>
+            <div class="divider">✦</div>
+            <button class="replay-btn" onclick="location.reload()">Tekrar Oyna</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const quizData = [
+        { q: "Milli Mücadele'nin İstanbul'daki stratejik hazırlık dönemi kaç gün sürmüştür?", a: ["184 gün", "120 gün", "210 gün", "150 gün"], c: 0 },
+        { q: "Mustafa Kemal'in Fethi Okyar ile çıkardığı gazetenin adı nedir?", a: ["İrade-i Milliye", "Minber", "Hakimiyet-i Milliye", "Aks-ı Sada"], c: 1 },
+        { q: "Mustafa Kemal'in Samsun'a giderken üstlendiği resmi makam nedir?", a: ["Harbiye Nazırı", "9. Ordu Müfettişi", "Vali", "Kolordu Komutanı"], c: 1 },
+        { q: "Bandırma Vapuru İstanbul'dan hangi tarihte ayrılmıştır?", a: ["19 Mayıs", "15 Mayıs", "16 Mayıs", "22 Mayıs"], c: 2 },
+        { q: "Samsun'dan Havza'ya uzanan 98 kilometrelik rotanın adı nedir?", a: ["İstiklal Yolu", "Kurtuluş Yolu", "Gazi Yolu", "Milli Yol"], c: 1 },
+        { q: "Samsunspor'un armasında hangi anıtın silüeti yer almaktadır?", a: ["Onur Anıtı", "İlk Adım Anıtı", "Erzurum Anıtı", "Dumlupınar Anıtı"], c: 0 },
+        { q: "Direnişin 'sinir sistemi' olarak adlandırılan haberleşme aracı nedir?", a: ["Gazete", "Miting", "Telgraf", "Mektup"], c: 2 },
+        { q: "Halkın işgallere karşı ilk kez mitinge davet edildiği belge hangisidir?", a: ["Amasya Tamimi", "Havza Genelgesi", "Samsun Raporu", "Nutuk"], c: 1 }
+    ];
+
+    const letters = ['A', 'B', 'C', 'D'];
+    let current = 0, score = 0;
+
+    const messages = [
+        ["Mükemmel! Tam puan! 🏆", "Tarihi çok iyi biliyorsunuz."],
+        ["Harika! Neredeyse tam puan! 🌟", "Tarihe olan ilginiz belli."],
+        ["Güzel sonuç! 👏", "Biraz daha çalışırsanız zirveye çıkarsınız."],
+        ["Fena değil.", "Milli Mücadele'yi daha iyi öğrenmek için tekrar deneyin."],
+        ["Az kaldı.", "Bu tarihi yeniden keşfetmenizi öneririz."]
+    ];
+
+    function getMsg(s, t) {
+        const ratio = s / t;
+        if (ratio === 1) return messages[0];
+        if (ratio >= 0.75) return messages[1];
+        if (ratio >= 0.5) return messages[2];
+        if (ratio >= 0.25) return messages[3];
+        return messages[4];
+    }
+
+    function loadQuestion() {
+        const q = quizData[current];
+        const qEl = document.getElementById("question-text");
+        qEl.classList.remove('question-animate');
+        void qEl.offsetWidth;
+        qEl.classList.add('question-animate');
+        qEl.innerText = q.q;
+
+        document.getElementById("question-counter").innerText = `Soru ${current + 1} / ${quizData.length}`;
+        document.getElementById("score-badge").innerText = `Puan: ${score}`;
+        document.getElementById("progress-bar").style.width = `${(current / quizData.length) * 100}%`;
+
+        const container = document.getElementById("options-container");
+        container.innerHTML = "";
+        document.getElementById("feedback").className = "";
+        document.getElementById("feedback").innerText = "";
+
+        q.a.forEach((opt, i) => {
+            const btn = document.createElement("button");
+            btn.className = "option-btn";
+            btn.innerHTML = `<span class="option-letter">${letters[i]}</span>${opt}`;
+            btn.onclick = () => checkAnswer(i, btn);
+            container.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(index, btn) {
+        const correct = quizData[current].c;
+        const allBtns = document.querySelectorAll(".option-btn");
+        allBtns.forEach(b => b.classList.add("disabled"));
+
+        const feedback = document.getElementById("feedback");
+
+        if (index === correct) {
+            score++;
+            btn.classList.add("correct");
+            feedback.innerText = "✓ Doğru cevap!";
+            feedback.style.color = "#2e7d32";
+        } else {
+            btn.classList.add("wrong");
+            allBtns[correct].classList.add("correct");
+            feedback.innerText = "✗ Yanlış cevap.";
+            feedback.style.color = "#b8001f";
+        }
+
+        feedback.classList.add("show");
+        document.getElementById("score-badge").innerText = `Puan: ${score}`;
+
+        setTimeout(() => {
+            current++;
+            if (current < quizData.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }, 1200);
+    }
+
+    function showResults() {
+        document.getElementById("progress-bar").style.width = "100%";
+        document.getElementById("game").classList.add("hidden");
+        document.getElementById("result-area").classList.remove("hidden");
+        document.getElementById("score-display").innerText = score;
+        document.getElementById("score-label").innerText = `/ ${quizData.length} doğru cevap`;
+        const [title, sub] = getMsg(score, quizData.length);
+        document.getElementById("result-message").innerHTML = `<strong>${title}</strong><br>${sub}`;
+    }
+
+    loadQuestion();
+</script>
+</body>
+</html>
