@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samsun Milli Mücadele Bilgi Yarışması</title>
+    <style>
+        :root {
+            --primary-red: #d32f2f;
+            --dark-blue: #1a237e;
+            --gold: #ffc107;
+            --light-bg: #f8f9fa;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #eceff1 0%, #cfd8dc 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        #quiz-card {
+            background: white;
+            width: 90%;
+            max-width: 700px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            border-top: 8px solid var(--primary-red);
+        }
+        .header { text-align: center; margin-bottom: 25px; }
+        .header h1 { color: var(--dark-blue); margin: 0; font-size: 24px; }
+        .header p { color: #666; font-style: italic; }
+        
+        #question-box { margin-bottom: 20px; }
+        .question-text { font-size: 1.2rem; font-weight: 600; color: #333; margin-bottom: 20px; line-height: 1.4; }
+        
+        .options-grid { display: grid; gap: 12px; }
+        .option-btn {
+            background: #fff;
+            border: 2px solid #e0e0e0;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+        .option-btn:hover { border-color: var(--dark-blue); background: #f0f2ff; }
+        .option-btn.correct { background: #c8e6c9; border-color: #4caf50; }
+        .option-btn.wrong { background: #ffcdd2; border-color: #f44336; }
+
+        #footer { margin-top: 25px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 15px; }
+        .score-board { font-weight: bold; color: var(--primary-red); }
+        .btn-next { background: var(--dark-blue); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; display: none; }
+        
+        #result-screen { text-align: center; display: none; }
+        .final-score { font-size: 3rem; color: var(--gold); margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<div id="quiz-card">
+    <div id="quiz-content">
+        <div class="header">
+            <h1>SAMSUN: İSTİKLAL'İN İLK ADIMI</h1>
+            <p>Dosyadaki Verilere Dayalı Bilgi Yarışması</p>
+        </div>
+
+        <div id="question-box">
+            <div id="progress" style="font-size: 0.9rem; color: #888; margin-bottom: 5px;"></div>
+            <div class="question-text" id="q-text">Soru yükleniyor...</div>
+            <div class="options-grid" id="options"></div>
+        </div>
+
+        <div id="footer">
+            <div class="score-board">Skor: <span id="current-score">0</span></div>
+            <button class="btn-next" id="next-btn" onclick="nextQuestion()">Sıradaki Soru</button>
+        </div>
+    </div>
+
+    <div id="result-screen">
+        <h2>Tebrikler! Yarışmayı Tamamladınız.</h2>
+        <div class="final-score" id="total-score">0</div>
+        <p id="feedback-msg"></p>
+        <button class="option-btn" style="text-align: center; width: 100%;" onclick="location.reload()">Yeniden Başla</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        {
+            q: "Atatürk'ün 19 Mayıs 1919 sabahı Samsun'da karaya ayak bastığı iskelenin adı nedir?",
+            a: ["Tütün İskelesi", "Fener İskelesi", "Kurtuluş İskelesi", "Milli İskele"],
+            c: 0
+        },
+        {
+            q: "Onur Anıtı'ndaki şahlanan at figürü aşağıdakilerden hangisini temsil eder?",
+            a: ["Ordunun gücünü", "Esaretten sonra zincirlerini kıran milleti", "Samsun'un yerel atlarını", "Tarım ve bereketi"],
+            c: 1
+        },
+        {
+            q: "Tarihi mekânların hikâyeleriyle öğrenilmesinin aidiyet duygusunu yaklaşık yüzde kaç oranında artırdığı öngörülmektedir?",
+            a: ["%25", "%60", "%45", "%85"],
+            c: 2
+        },
+        {
+            q: "Atatürk'ün Samsun'da kaldığı ve telgraflar gönderdiği, günümüzde müze olan binanın adı nedir?",
+            a: ["Mesudiye Oteli", "Gazi Müzesi (Mıntıka Palas)", "Saraydüzü Kışlası", "Bandırma Konağı"],
+            c: 1
+        },
+        {
+            q: "Milli Mücadele ruhunun 'bir milletin son umudu' olarak nitelendirilen simgesi hangisidir?",
+            a: ["Bandırma Vapuru", "Onur Anıtı", "Tütün İskelesi", "Havza Genelgesi"],
+            c: 0
+        },
+        {
+            q: "Mekânı fiziksel olarak ziyaret eden gençlerin yüzde kaçı olayları daha derinlemesine anladığını belirtmiştir?",
+            a: ["%50", "%85", "%100", "%45"],
+            c: 1
+        }
+    ];
+
+    let currentQIdx = 0;
+    let score = 0;
+    let answered = false;
+
+    function initQuiz() {
+        showQuestion();
+    }
+
+    function showQuestion() {
+        answered = false;
+        const q = questions[currentQIdx];
+        document.getElementById("q-text").innerText = q.q;
+        document.getElementById("progress").innerText = `Soru ${currentQIdx + 1} / ${questions.length}`;
+        document.getElementById("next-btn").style.display = "none";
+        
+        const optionsDiv = document.getElementById("options");
+        optionsDiv.innerHTML = "";
+        
+        q.a.forEach((opt, idx) => {
+            const btn = document.createElement("button");
+            btn.className = "option-btn";
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(idx, btn);
+            optionsDiv.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(idx, btn) {
+        if (answered) return;
+        answered = true;
+        const correctIdx = questions[currentQIdx].c;
+        
+        if (idx === correctIdx) {
+            btn.classList.add("correct");
+            score += 10;
+            document.getElementById("current-score").innerText = score;
+        } else {
+            btn.classList.add("wrong");
+            document.getElementById("options").children[correctIdx].classList.add("correct");
+        }
+        
+        document.getElementById("next-btn").style.display = "block";
+    }
+
+    function nextQuestion() {
+        currentQIdx++;
+        if (currentQIdx < questions.length) {
+            showQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById("quiz-content").style.display = "none";
+        const resultScreen = document.getElementById("result-screen");
+        resultScreen.style.display = "block";
+        document.getElementById("total-score").innerText = score;
+        
+        let msg = score >= 40 ? "Harika! Samsun ve Milli Mücadele tarihine çok hakimsin." : "Güzel bir deneme. Dosyadaki bilgileri tekrar inceleyerek skoru artırabilirsin.";
+        document.getElementById("feedback-msg").innerText = msg;
+    }
+
+    initQuiz();
+</script>
+
+</body>
+</html>
